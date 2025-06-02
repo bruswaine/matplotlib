@@ -461,6 +461,12 @@ def validate_font_properties(s):
     return s
 
 
+def validate_font_superfamily(val):
+    if val is None or isinstance(val, str):
+        return val
+    raise ValueError(f"Expected str or None for font.superfamily, got {val!r}")
+
+
 def _validate_mathtext_fallback(s):
     _fallback_fonts = ['cm', 'stix', 'stixsans']
     if isinstance(s, str):
@@ -1038,7 +1044,7 @@ _validators = {
     "font.enable_last_resort":     validate_bool,
     "font.family":     validate_stringlist,  # used by text object
     "font.style":      validate_string,
-    "font.superfamily": validate_stringlist,  # list of logical superfamily name
+    "font.superfamily": validate_font_superfamily,  # list of logical superfamily name
     "font.variant":    validate_string,
     "font.stretch":    validate_fontstretch,
     "font.weight":     validate_fontweight,

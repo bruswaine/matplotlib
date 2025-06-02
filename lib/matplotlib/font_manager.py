@@ -308,6 +308,8 @@ def findSystemFonts(fontpaths=None, fontext='ttf'):
     return [fname for fname in fontfiles if os.path.exists(fname)]
 
 
+
+
 class FontSuperfamily:
     """
     Represents a typographic superfamily — a logical grouping of fonts that
@@ -329,11 +331,13 @@ class FontSuperfamily:
             Logical name of the superfamily (e.g., 'Roboto').
         """
         self.name = name
-        self.variants: Dict[str, str] = {}
+        # genre → style_key → font_name
+        self.variants: Dict[str, Dict[str, str]] = {}
 
-    def register(self, genre: str, font_name: str):
+    def register(self, genre: str, font_name: str,
+                 weight: str = "normal", style: str = "normal"):
         """
-        Register a specific font under a given genre.
+        Register a specific font under a given genre and variation.
 
         Parameters
         ----------
@@ -341,30 +345,66 @@ class FontSuperfamily:
             One of: 'serif', 'sans', 'mono', 'cursive', 'fantasy', etc.
         font_name : str
             The actual font name (e.g., 'Roboto Serif').
+        weight : str
+            Font weight (e.g., 'normal', 'bold').
+        style : str
+            Font style (e.g., 'normal', 'italic').
         """
-        self.variants[genre.lower()] = font_name
+        genre = genre.lower()
+        key = f"{weight.lower()}-{style.lower()}"
+        self.variants.setdefault(genre, {})[key] = font_name
 
     def get_family(self, genre: str,
-                   weight: Optional[Union[int, str]] = None,
-                   style: Optional[str] = None) -> Optional[str]:
+                weight: Optional[Union[int, str]] = None,
+                style: Optional[str] = None) -> Optional[str]:
         """
         Return the font name associated with a genre in this superfamily.
+
+        Tries multiple fallbacks:
+        - Exact match on weight + style
+        - Match on weight only (style=normal)
+        - Match on style only (weight=normal)
+        - Default to normal-normal
 
         Parameters
         ----------
         genre : str
             The genre to look up ('serif', 'sans', etc.).
         weight : int or str, optional
-            Currently unused (reserved for future expansion).
+            Font weight (e.g., 'bold').
         style : str, optional
-            Currently unused (reserved for future expansion).
+            Font style (e.g., 'italic').
 
         Returns
         -------
         str or None
             The name of the registered font, or None if not found.
         """
-        return self.variants.get(genre.lower())
+        genre = genre.lower()
+        variants = self.variants.get(genre, {})
+
+        def norm(x, is_style=False):
+            if x is None:
+                return "normal"
+            s = str(x).lower()
+            return "italic" if is_style and s == "oblique" else s
+
+
+        keys = [
+        f"{norm(weight)}-{norm(style, is_style=True)}",
+        f"{norm(weight)}-normal",
+        f"normal-{norm(style, is_style=True)}",
+        "normal-normal",
+        ]
+
+
+        for key in keys:
+            if key in variants:
+                return variants[key]
+
+        return None
+
+
 
     @classmethod
     def get_superfamily(cls, name: str) -> "FontSuperfamily":
@@ -737,10 +777,10 @@ class FontProperties:
 
     @_cleanup_fontproperties_init
     def __init__(self, family=None, style=None, variant=None, weight=None,
-                 stretch=None, size=None,
-                 fname=None,  # if set, it's a hardcoded filename to use
-                 math_fontfamily=None):
-        self.set_family(family)
+                stretch=None, size=None,
+                fname=None,  # if set, it's a hardcoded filename to use
+                math_fontfamily=None):
+
         self.set_style(style)
         self.set_variant(variant)
         self.set_weight(weight)
@@ -748,6 +788,9 @@ class FontProperties:
         self.set_file(fname)
         self.set_size(size)
         self.set_math_fontfamily(math_fontfamily)
+
+        resolved = self._resolve_superfamily_from_rc() if family is None else None
+        self.set_family(resolved if resolved else family)
         # Treat family as a fontconfig pattern if it is the only parameter
         # provided.  Even in that case, call the other setters first to set
         # attributes not specified by the pattern to the rcParams defaults.
@@ -795,6 +838,33 @@ class FontProperties:
 
     def __str__(self):
         return self.get_fontconfig_pattern()
+
+    def _resolve_superfamily_from_rc(self):
+        superfamily_name = mpl.rcParams.get("font.superfamily", None)
+        if (
+            isinstance(superfamily_name, str)
+            and superfamily_name.strip().lower() != "none"
+            and superfamily_name.strip() != ""
+        ):
+            try:
+                sf = FontSuperfamily.get_superfamily(superfamily_name)
+                return sf.get_family(
+                    genre=mpl.rcParams["font.family"][0],
+                    weight=self.get_weight(),
+                    style=self.get_style()
+                )
+            except Exception as e:
+                import warnings
+                warnings.warn(
+                    f"Failed to resolve font.superfamily '{superfamily_name}': {e}. "
+                    f"Falling back to font.family.",
+                    UserWarning
+                )
+        return None
+
+
+
+
 
     def get_family(self):
         """
