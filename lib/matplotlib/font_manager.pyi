@@ -9,6 +9,9 @@ from pathlib import Path
 from collections.abc import Iterable
 from typing import Any, Literal
 
+from typing import Dict, Optional, Union
+
+
 font_scalings: dict[str | None, float]
 stretch_dict: dict[str, int]
 weight_dict: dict[str, int]
@@ -134,3 +137,32 @@ def findfont(
     rebuild_if_missing: bool = ...,
 ) -> str: ...
 def get_font_names() -> list[str]: ...
+
+class FontSuperfamily:
+
+    _registry: Dict[str, "FontSuperfamily"]
+
+    name: str
+    variants: Dict[str, Dict[str, str]]
+
+    def __init__(self, name: str) -> None: ...
+
+    def register(
+        self,
+        genre: str,
+        font_name: str,
+        weight: str = ...,
+        style: str = ...
+    ) -> None: ...
+
+    def get_family(
+        self,
+        genre: str,
+        weight: Optional[Union[int, str]] = ...,
+        style: Optional[str] = ...
+    ) -> Optional[str]: ...
+
+    @classmethod
+    def get_superfamily(cls, name: str) -> "FontSuperfamily": ...
+
+    def __repr__(self) -> str: ...
