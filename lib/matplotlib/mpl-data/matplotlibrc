@@ -265,6 +265,7 @@
 ## relative to font.size, using the following values: xx-small, x-small,
 ## small, medium, large, x-large, xx-large, larger, or smaller
 
+#font.superfamily: None
 #font.family:  sans-serif
 #font.style:   normal
 #font.variant: normal

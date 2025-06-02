@@ -1038,6 +1038,7 @@ _validators = {
     "font.enable_last_resort":     validate_bool,
     "font.family":     validate_stringlist,  # used by text object
     "font.style":      validate_string,
+    "font.superfamily": validate_stringlist,  # list of logical superfamily name
     "font.variant":    validate_string,
     "font.stretch":    validate_fontstretch,
     "font.weight":     validate_fontweight,
