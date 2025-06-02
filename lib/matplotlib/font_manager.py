@@ -50,6 +50,8 @@ from matplotlib._fontconfig_pattern import (
     parse_fontconfig_pattern, generate_fontconfig_pattern)
 from matplotlib.rcsetup import _validators
 
+from typing import Optional, Dict, Union
+
 _log = logging.getLogger(__name__)
 
 font_scalings = {
@@ -304,6 +306,86 @@ def findSystemFonts(fontpaths=None, fontext='ttf'):
         fontfiles.update(map(os.path.abspath, list_fonts(path, fontexts)))
 
     return [fname for fname in fontfiles if os.path.exists(fname)]
+
+
+class FontSuperfamily:
+    """
+    Represents a typographic superfamily — a logical grouping of fonts that
+    share a common design but span different genres
+    like 'serif', 'sans', 'mono', etc.
+    Example: the 'Roboto' superfamily includes 'Roboto',
+    'Roboto Serif', and 'Roboto Mono'.
+    """
+
+    _registry: Dict[str, "FontSuperfamily"] = {}
+
+    def __init__(self, name: str):
+        """
+        Initialize a superfamily with a given name.
+
+        Parameters
+        ----------
+        name : str
+            Logical name of the superfamily (e.g., 'Roboto').
+        """
+        self.name = name
+        self.variants: Dict[str, str] = {}
+
+    def register(self, genre: str, font_name: str):
+        """
+        Register a specific font under a given genre.
+
+        Parameters
+        ----------
+        genre : str
+            One of: 'serif', 'sans', 'mono', 'cursive', 'fantasy', etc.
+        font_name : str
+            The actual font name (e.g., 'Roboto Serif').
+        """
+        self.variants[genre.lower()] = font_name
+
+    def get_family(self, genre: str,
+                   weight: Optional[Union[int, str]] = None,
+                   style: Optional[str] = None) -> Optional[str]:
+        """
+        Return the font name associated with a genre in this superfamily.
+
+        Parameters
+        ----------
+        genre : str
+            The genre to look up ('serif', 'sans', etc.).
+        weight : int or str, optional
+            Currently unused (reserved for future expansion).
+        style : str, optional
+            Currently unused (reserved for future expansion).
+
+        Returns
+        -------
+        str or None
+            The name of the registered font, or None if not found.
+        """
+        return self.variants.get(genre.lower())
+
+    @classmethod
+    def get_superfamily(cls, name: str) -> "FontSuperfamily":
+        """
+        Retrieve or create a FontSuperfamily instance by name.
+
+        Parameters
+        ----------
+        name : str
+            The logical superfamily name.
+
+        Returns
+        -------
+        FontSuperfamily
+        """
+        if name not in cls._registry:
+            cls._registry[name] = FontSuperfamily(name)
+        return cls._registry[name]
+
+    def __repr__(self):
+        return f"<FontSuperfamily '{self.name}': {self.variants}>"
 
 
 @dataclasses.dataclass(frozen=True)
