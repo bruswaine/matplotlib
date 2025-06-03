@@ -405,31 +405,83 @@ class FontSuperfamily:
         return None
 
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> Dict[str, any]:
+        """
+        Convert the FontSuperfamily instance to a dictionary.
+
+        Returns
+        -------
+        dict
+            Dictionary representation of the instance.
+        """
         return {"name": self.name, "variants": self.variants}
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "FontSuperfamily":
+    def from_dict(cls, data: Dict[str, any]) -> "FontSuperfamily":
+        """
+        Create a FontSuperfamily from a dictionary.
+
+        Parameters
+        ----------
+        data : dict
+            Dictionary with 'name' and 'variants'.
+
+        Returns
+        -------
+        FontSuperfamily
+        """
         sf = cls(data["name"])
         for genre, variants in data["variants"].items():
             for key, font in variants.items():
                 weight, style = key.split("-")
                 sf.register(genre, font, weight, style)
         return sf
+    
     #maybe??
     def save_to_file(self, path: str):
+        """
+        Save the superfamily to a JSON file.
+
+        Parameters
+        ----------
+        path : str
+            Path to the file where the superfamily should be saved.
+        """
         import json
         with open(path, "w") as f:
             json.dump(self.to_dict(), f, indent=4)
+
+
     #maybeee???
     @classmethod
     def load_from_file(cls, path: str) -> "FontSuperfamily":
+        """
+        Load a FontSuperfamily from a JSON file.
+
+        Parameters
+        ----------
+        path : str
+            Path to the file to load from.
+
+        Returns
+        -------
+        FontSuperfamily
+        """
         import json
         with open(path, "r") as f:
             data = json.load(f)
         return cls.from_dict(data)
     
-    def list_registered(self) -> List[str]:
+    def list_registered(self) -> list[str]:
+        """
+        List all registered genre/style/weight/font combinations.
+
+        Returns
+        -------
+        list of str
+            Each string describes a font registration in the format:
+            "genre: weight-style → font_name".
+        """
         entries = []
         for genre, variants in self.variants.items():
             for key, font in variants.items():
@@ -438,10 +490,25 @@ class FontSuperfamily:
     
     #maybe???
     def clear(self):
+        """
+        Remove all registered fonts from the superfamily.
+        """
         self.variants.clear()
 
     #maybeee???
     def unregister(self, genre: str, weight: str = "normal", style: str = "normal"):
+        """
+        Remove a previously registered font from the superfamily.
+
+        Parameters
+        ----------
+        genre : str
+            The genre of the font to unregister.
+        weight : str, default: "normal"
+            The weight variation to remove.
+        style : str, default: "normal"
+            The style variation to remove.
+        """
         genre = genre.lower()
         key = f"{weight.lower()}-{style.lower()}"
         if genre in self.variants:
@@ -450,13 +517,50 @@ class FontSuperfamily:
                 del self.variants[genre]
 
     #???????
-    def available_genres(self) -> List[str]:
+    def available_genres(self) -> list[str]:
+        """
+        List all genres with at least one registered font.
+
+        Returns
+        -------
+        list of str
+            Genre names.
+        """
         return list(self.variants.keys())
+    
     #??????????
-    def available_variants(self, genre: str) -> List[str]:
+    def available_variants(self, genre: str) -> list[str]:
+        """
+        List all weight-style combinations registered under a given genre.
+
+        Parameters
+        ----------
+        genre : str
+            The genre to query.
+
+        Returns
+        -------
+        list of str
+            All variant keys like 'bold-italic', 'normal-normal', etc.
+        """
         return list(self.variants.get(genre.lower(), {}).keys())
+    
+    
     #???????
     def __eq__(self, other):
+        """
+        Equality comparison with another FontSuperfamily.
+
+        Parameters
+        ----------
+        other : any
+            Another object to compare.
+
+        Returns
+        -------
+        bool
+            True if the other is a FontSuperfamily with same name and variants.
+        """
         if not isinstance(other, FontSuperfamily):
             return False
         return self.name == other.name and self.variants == other.variants
@@ -482,6 +586,14 @@ class FontSuperfamily:
         return cls._registry[name]
 
     def __repr__(self):
+        """
+        Return the string representation of the superfamily.
+
+        Returns
+        -------
+        str
+            Representation in the format "<FontSuperfamily 'name': {...}>"
+        """
         return f"<FontSuperfamily '{self.name}': {self.variants}>"
 
 
