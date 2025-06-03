@@ -405,6 +405,63 @@ class FontSuperfamily:
         return None
 
 
+    def to_dict(self) -> Dict[str, Any]:
+        return {"name": self.name, "variants": self.variants}
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "FontSuperfamily":
+        sf = cls(data["name"])
+        for genre, variants in data["variants"].items():
+            for key, font in variants.items():
+                weight, style = key.split("-")
+                sf.register(genre, font, weight, style)
+        return sf
+    #maybe??
+    def save_to_file(self, path: str):
+        import json
+        with open(path, "w") as f:
+            json.dump(self.to_dict(), f, indent=4)
+    #maybeee???
+    @classmethod
+    def load_from_file(cls, path: str) -> "FontSuperfamily":
+        import json
+        with open(path, "r") as f:
+            data = json.load(f)
+        return cls.from_dict(data)
+    
+    def list_registered(self) -> List[str]:
+        entries = []
+        for genre, variants in self.variants.items():
+            for key, font in variants.items():
+                entries.append(f"{genre}: {key} → {font}")
+        return entries
+    
+    #maybe???
+    def clear(self):
+        self.variants.clear()
+
+    #maybeee???
+    def unregister(self, genre: str, weight: str = "normal", style: str = "normal"):
+        genre = genre.lower()
+        key = f"{weight.lower()}-{style.lower()}"
+        if genre in self.variants:
+            self.variants[genre].pop(key, None)
+            if not self.variants[genre]:
+                del self.variants[genre]
+
+    #???????
+    def available_genres(self) -> List[str]:
+        return list(self.variants.keys())
+    #??????????
+    def available_variants(self, genre: str) -> List[str]:
+        return list(self.variants.get(genre.lower(), {}).keys())
+    #???????
+    def __eq__(self, other):
+        if not isinstance(other, FontSuperfamily):
+            return False
+        return self.name == other.name and self.variants == other.variants
+    
+
 
     @classmethod
     def get_superfamily(cls, name: str) -> "FontSuperfamily":
