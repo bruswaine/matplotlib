@@ -320,7 +320,7 @@ class FontSuperfamily:
     """
 
     _registry: Dict[str, "FontSuperfamily"] = {}
-
+    
     def __init__(self, name: str):
         """
         Initialize a superfamily with a given name.
@@ -333,6 +333,156 @@ class FontSuperfamily:
         self.name = name
         # genre → style_key → font_name
         self.variants: Dict[str, Dict[str, str]] = {}
+
+    def _populate_default_superfamilies():
+        """
+        Populate the FontSuperfamily registry with common default superfamilies.
+
+        This function initializes the `_registry` class attribute with a
+        predefined set of logical font superfamilies.
+
+        It is safe to call multiple times — population will only occur once,
+        and subsequent calls will have no effect if the registry is already
+        filled.
+        """
+        if FontSuperfamily._registry:
+            return  # Already populated
+
+        _defaults = [
+        {
+            "name": "DejaVu",
+            "variants": {
+                "serif": {
+                    "normal-normal": "DejaVu Serif",
+                    "bold-normal": "DejaVu Serif Bold",
+                    "normal-italic": "DejaVu Serif Italic"
+                },
+                "sans": {
+                    "normal-normal": "DejaVu Sans",
+                    "bold-normal": "DejaVu Sans Bold",
+                    "normal-italic": "DejaVu Sans Oblique"
+                },
+                "mono": {
+                    "normal-normal": "DejaVu Sans Mono",
+                    "bold-normal": "DejaVu Sans Mono Bold",
+                    "normal-italic": "DejaVu Sans Mono Oblique"
+                }
+            }
+        },
+        {
+            "name": "Bitstream Vera",
+            "variants": {
+                "serif": {
+                    "normal-normal": "Bitstream Vera Serif",
+                    "bold-normal": "Bitstream Vera Serif Bold",
+                    "normal-italic": "Bitstream Vera Serif Italic"
+                },
+                "sans": {
+                    "normal-normal": "Bitstream Vera Sans",
+                    "bold-normal": "Bitstream Vera Sans Bold",
+                    "normal-italic": "Bitstream Vera Sans Oblique"
+                },
+                "mono": {
+                    "normal-normal": "Bitstream Vera Sans Mono",
+                    "bold-normal": "Bitstream Vera Sans Mono Bold",
+                    "normal-italic": "Bitstream Vera Sans Mono Oblique"
+                }
+            }
+        },
+        {
+            "name": "Computer Modern",
+            "variants": {
+                "serif": {
+                    "normal-normal": "Computer Modern Roman",
+                    "bold-normal": "Computer Modern Bold",
+                    "normal-italic": "Computer Modern Italic"
+                },
+                "sans": {
+                    "normal-normal": "Computer Modern Sans Serif",
+                    "bold-normal": "Computer Modern Sans Bold",
+                    "normal-italic": "Computer Modern Sans Italic"
+                },
+                "mono": {
+                    "normal-normal": "Computer Modern Typewriter",
+                    "bold-normal": "Computer Modern Typewriter Bold",
+                    "normal-italic": "Computer Modern Typewriter Italic"
+                }
+            }
+        },
+        {
+            "name": "Times",
+            "variants": {
+                "serif": {
+                    "normal-normal": "Times New Roman",
+                    "bold-normal": "Times New Roman Bold",
+                    "normal-italic": "Times New Roman Italic"
+                }
+            }
+        },
+        {
+            "name": "Arial",
+            "variants": {
+                "sans": {
+                    "normal-normal": "Arial",
+                    "bold-normal": "Arial Bold",
+                    "normal-italic": "Arial Italic"
+                }
+            }
+        },
+        {
+            "name": "Courier",
+            "variants": {
+                "mono": {
+                    "normal-normal": "Courier New",
+                    "bold-normal": "Courier New Bold",
+                    "normal-italic": "Courier New Italic"
+                }
+            }
+        },
+        {
+            "name": "Comic Neue",
+            "variants": {
+                "cursive": {
+                    "normal-normal": "Comic Neue",
+                    "bold-normal": "Comic Neue Bold",
+                    "normal-italic": "Comic Neue Italic"
+                }
+            }
+        },
+        {
+            "name": "Impact",
+            "variants": {
+                "fantasy": {
+                    "normal-normal": "Impact"
+                }
+            }
+        },
+        {
+            "name": "Palatino",
+            "variants": {
+                "serif": {
+                    "normal-normal": "Palatino",
+                    "bold-normal": "Palatino Bold",
+                    "normal-italic": "Palatino Italic"
+                }
+            }
+        },
+        {
+            "name": "Verdana",
+            "variants": {
+                "sans": {
+                    "normal-normal": "Verdana",
+                    "bold-normal": "Verdana Bold",
+                    "normal-italic": "Verdana Italic"
+                }
+            }
+        }
+    ]
+
+        for sf_data in _defaults:
+            sf = FontSuperfamily.from_dict(sf_data)
+            FontSuperfamily._registry[sf.name] = sf
+
 
     def register(self, genre: str, font_name: str,
                  weight: str = "normal", style: str = "normal"):
@@ -566,7 +716,6 @@ class FontSuperfamily:
         return self.name == other.name and self.variants == other.variants
     
 
-
     @classmethod
     def get_superfamily(cls, name: str) -> "FontSuperfamily":
         """
@@ -581,6 +730,9 @@ class FontSuperfamily:
         -------
         FontSuperfamily
         """
+        # ensures registry is filled
+        FontSuperfamily._populate_default_superfamilies()  
+
         if name not in cls._registry:
             cls._registry[name] = FontSuperfamily(name)
         return cls._registry[name]
